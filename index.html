@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RUNPLAN PRO - Pace, Segments, Fueling & Race Strategy</title>
+  
+  <!-- External Tailwind CSS & FontAwesome Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Web Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              red: '#ff3b30',
+              crimson: '#e50914',
+              pink: '#ff2d55',
+              dark: '#0d0d11',
+              card: '#181820',
+              border: '#282836'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    body {
+      background-color: #0d0d11;
+      color: #f3f4f6;
+      font-family: 'Inter', sans-serif;
+    }
+    .red-glow {
+      box-shadow: 0 0 25px rgba(255, 59, 48, 0.2);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #111118;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #2d2d3d;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #ff3b30;
+    }
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-card {
+        background: #ffffff !important;
+        border: 1px solid #ccc !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+    }
+    .print-only {
+      display: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-brand-red selection:text-white antialiased pb-16 sm:pb-0">
+
+  <!-- HEADER BAR -->
+  <header class="border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-40 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-crimson to-brand-red flex items-center justify-center text-white font-black text-xl shadow-lg shadow-red-600/30">
+          <i class="fa-solid fa-person-running"></i>
+        </div>
+        <div>
+          <span class="text-xl font-black tracking-tight text-white flex items-center gap-1.5">
+            RUN<span class="text-brand-red font-extrabold">PLAN</span>
+            <span class="text-[10px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full bg-red-500/10 text-brand-red border border-red-500/20">PRO 2.0</span>
+          </span>
+          <p class="text-xs text-zinc-400 hidden sm:block">Pace, Race Strategy, Fueling & Hydration Planner</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <!-- Units Toggle -->
+        <div class="bg-zinc-900 border border-zinc-800 p-1 rounded-xl flex items-center text-xs font-semibold">
+          <button id="unitMilesBtn" onclick="setUnit('miles')" class="px-3 py-1.5 rounded-lg transition-all duration-200 bg-brand-red text-white font-bold shadow-sm">
+            Miles
+          </button>
+          <button id="unitKmBtn" onclick="setUnit('km')" class="px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition-all duration-200">
+            KM
+          </button>
+        </div>
+
+        <button onclick="openWristbandModal()" class="hidden md:flex items-center gap-2 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold px-3 py-2 rounded-xl transition border border-zinc-700">
+          <i class="fa-solid fa-tape text-amber-400"></i>
+          <span>Pace Band</span>
+        </button>
+
+        <button onclick="copyScheduleText()" class="hidden sm:flex items-center gap-2 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold px-3 py-2 rounded-xl transition border border-zinc-700">
+          <i class="fa-regular fa-copy text-brand-red"></i>
+          <span>Copy</span>
+        </button>
+
+        <button onclick="window.print()" class="flex items-center gap-2 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold px-3 py-2 rounded-xl transition border border-zinc-700">
+          <i class="fa-solid fa-print text-zinc-300"></i>
+          <span class="hidden sm:inline">Print</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN LAYOUT CONTENT -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+    
+    <!-- LEFT COLUMN: Inputs & Configurations (7 Cols) -->
+    <section class="lg:col-span-7 space-y-6">
+      
+      <!-- MODE SELECTION TOGGLE & EVENT TYPE -->
+      <div class="bg-brand-card border border-zinc-800 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-sliders text-brand-red"></i>
+              Execution & Event Setup
+            </h2>
+            <p class="text-xs text-zinc-400 mt-0.5">Configure run type and mode</p>
+          </div>
+          
+          <div class="bg-zinc-950 border border-zinc-800 p-1.5 rounded-xl flex w-full sm:w-auto">
+            <button id="modeSimpleBtn" onclick="setMode('simple')" class="flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 bg-brand-red text-white shadow-md">
+              <i class="fa-solid fa-bolt"></i> Simple Run
+            </button>
+            <button id="modeSegmentedBtn" onclick="setMode('segmented')" class="flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 text-zinc-400 hover:text-white">
+              <i class="fa-solid fa-layer-group"></i> Segmented
+            </button>
+          </div>
+        </div>
+
+        <!-- Event Type Toggle: Training vs Race Day -->
+        <div class="pt-3 border-t border-zinc-800/80 flex items-center justify-between">
+          <span class="text-xs font-semibold text-zinc-300">Event Type:</span>
+          <div class="bg-zinc-950 border border-zinc-800 p-1 rounded-xl flex text-xs">
+            <button id="eventTypeTrainingBtn" onclick="setEventType('training')" class="px-3 py-1 rounded-lg text-white font-bold bg-zinc-800">Training Run</button>
+            <button id="eventTypeRaceBtn" onclick="setEventType('race')" class="px-3 py-1 rounded-lg text-zinc-400 hover:text-white">Official Race Day</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RACE DAY EXTRA BUFFERS (Only Visible in Race Mode) -->
+      <div id="raceDayPanel" class="hidden bg-brand-card border border-amber-500/30 rounded-2xl p-6 shadow-xl space-y-4">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+          <i class="fa-solid fa-trophy"></i> Race Day Logistics & Buffers
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-zinc-300 mb-1">Corral Entry Cutoff (mins before start)</label>
+            <input type="number" id="corralBuffer" value="20" min="0" max="90" oninput="calculatePlan()" class="w-full h-10 bg-zinc-950 border border-zinc-800 text-white rounded-xl px-3 text-xs font-mono focus:border-brand-red">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-zinc-300 mb-1">Gear Drop Buffer (mins)</label>
+            <input type="number" id="bagDropBuffer" value="15" min="0" max="60" oninput="calculatePlan()" class="w-full h-10 bg-zinc-950 border border-zinc-800 text-white rounded-xl px-3 text-xs font-mono focus:border-brand-red">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-zinc-300 mb-1">Aid Stations Strategy</label>
+            <select id="aidStationFrequency" onchange="calculatePlan()" class="w-full h-10 bg-zinc-950 border border-zinc-800 text-white rounded-xl px-2 text-xs focus:border-brand-red">
+              <option value="none">No Course Aid Needed</option>
+              <option value="2mi" selected>Every 2 Miles / 3 KM</option>
+              <option value="5k">Every 5K</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- TIMING & SCHEDULE INPUTS -->
+      <div class="bg-brand-card border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-5">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+          <i class="fa-regular fa-clock text-brand-red"></i> Schedule & Timing Mode
+        </h3>
+
+        <!-- Time Basis Selection Toggle -->
+        <div class="bg-zinc-950 border border-zinc-800 p-1 rounded-xl flex items-center text-xs font-semibold max-w-xs">
+          <button id="basisFinishBtn" onclick="setTimeBasis('finish')" class="flex-1 py-1.5 rounded-lg transition-all duration-200 bg-brand-red text-white font-bold shadow-sm">
+            Target Finish
+          </button>
+          <button id="basisStartBtn" onclick="setTimeBasis('start')" class="flex-1 py-1.5 rounded-lg text-zinc-400 hover:text-white transition-all duration-200">
+            Target Start
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Dynamic Time Input -->
+          <div class="flex flex-col justify-between">
+            <label id="timeInputLabel" class="block text-xs font-semibold text-zinc-300 mb-1.5">Target Finish Time</label>
+            <input type="time" id="targetTime" value="06:30" onchange="calculatePlan()" class="w-full h-11 bg-zinc-950 border border-zinc-800 text-white rounded-xl px-3.5 text-sm focus:outline-none focus:border-brand-red font-mono">
+            <p id="timeInputSubtext" class="text-[11px] text-zinc-500 mt-1">When you need to finish</p>
+          </div>
+
+          <!-- Pre-Run Prep Duration -->
+          <div class="flex flex-col justify-between">
+            <label class="block text-xs font-semibold text-zinc-300 mb-1.5">Prep Time (Minutes)</label>
+            <input type="number" id="prepMinutes" value="30" min="0" max="240" step="5" oninput="calculatePlan()" class="w-full h-11 bg-zinc-950 border border-zinc-800 text-white rounded-xl px-3.5 text-sm focus:outline-none focus:border-brand-red font-mono">
+            <p class="text-[11px] text-zinc-500 mt-1">Time needed before starting run</p>
+          </div>
+        </div>
+
+        <!-- Quick Prep Presets -->
+        <div class="flex items-center gap-2 pt-1 border-t border-zinc-800/60">
+          <span class="text-xs text-zinc-400 font-medium">Quick Prep:</span>
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="setPrepPreset(15)" class="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-xs text-zinc-300 border border-zinc-800 transition">15m</button>
+            <button onclick="setPrepPreset(30)" class="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-xs text-zinc-300 border border-zinc-800 transition">30m</button>
+            <button onclick="setPrepPreset(45)" class="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-xs text-zinc-300 border border-zinc-800 transition">45m</button>
+            <button onclick="setPrepPreset(60)" class="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-xs text-zinc-300 border border-zinc-800 transition">60m</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIMPLE RUN INPUT PANEL -->
+      <div id="simpleRunPanel" class="bg-brand-card border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-5">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-zinc-400 flex items-center justify-between">
+          <span class="flex items-center gap-2"><i class="fa-solid fa-bolt text-brand-red"></i> Simple Run Setup</span>
+        </h3>
+
+        <!-- Dynamic Preset Distance Chips -->
+        <div>
+          <label class="block text-xs font-semibold text-zinc-400 mb-2">Distance Presets</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <button id="preset5kBtn" onclick="setSimplePreset('5k')" class="py-2.5 px-3 rounded-xl bg-zinc-950 hover:border-brand-red border border-zinc-800 text-xs text-zinc-200 font-semibold transition text-center">5K (3.1 mi)</button>
+            <button id="preset10kBtn" onclick="setSimplePreset('10k')" class="py-2.5 px-3 rounded-xl bg-zinc-950 hover:border-brand-red border border-zinc-800 text-xs text-zinc-200 font-semibold transition text-center">10K (6.2 mi)</button>
+            <button id="presetHalfBtn" onclick="setSimplePreset('half')" class="py-2.5 px-3 rounded-xl bg-zinc-950 hover:border-brand-red border border-zinc-800 text-xs text-zinc-200 font-semibold transition text-center">Half (13.1 mi)</button>
+            <button id="presetFullBtn" onclick="setSimplePreset('full')" class="py-2.5 px-3 rounded-xl bg-zinc-950 hover:border-brand-red border border-zinc-800 text-xs text-zinc-200 font-semibold transition text-center">Full (26.2 mi)</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end">
+          <div class="sm:col-span-5">
+            <label class="block text-xs font-semibold text-zinc-300 mb-1.5">Total Distance (<span class="unitLabel">mi</span>)</label>
+            <input type="number" id="simpleDistance" value="8.0" step="0.1" min="0.1" oninput="calculatePlan()" class="w-full h-11 bg-zinc-950 border border-zinc-800 text-white rounded-xl px-3.5 text-sm focus:outline-none focus:border-brand-red font-mono">
+          </div>
+
+          <div class="sm:col-span-7">
+            <label class="block text-xs font-semibold text-zinc-300 mb-1.5">
+              Pace per <span class="unitLabel">mi</span>
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="relative flex items-center">
+                <input type="number" id="simplePaceMin" value="8" min="3" max="30" oninput="calculatePlan()" class="w-full h-11 bg-zinc-950 border border-zinc-800 text-white rounded-xl pl-3 pr-11 text-sm focus:outline-none focus:border-brand-red font-mono">
+                <span class="absolute right-3 text-xs text-zinc-500 font-semibold pointer-events-none">min</span>
+              </div>
+              <div class="relative flex items-center">
+                <input type="number" id="simplePaceSec" value="30" min="0" max="59" step="5" oninput="calculatePlan()" class="w-full h-11 bg-zinc-950 border border-zinc-800 text-white rounded-xl pl-3 pr-11 text-sm focus:outline-none focus:border-brand-red font-mono">
+                <span class="absolute right-3 text-xs text-zinc-500 font-semibold pointer-events-none">sec</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MULTI-SEGMENT BUILDER PANEL -->
+      <div id="segmentedRunPanel" class="hidden bg-brand-card border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-brand-red"></i> Run Segments Builder
+            </h3>
+            <p class="text-xs text-zinc-400 mt-0.5">Combine distinct paces</p>
+          </div>
+
+          <button onclick="addSegment()" class="bg-red-500/10 hover:bg-red-500/20 text-brand-red border border-red-500/30 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition shadow-sm">
+            <i class="fa-solid fa-plus"></i> Add Segment
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2 pt-1 border-t border-zinc-800/80">
+          <span class="text-xs text-zinc-400 font-medium">Presets:</span>
+          <div class="flex flex-wrap gap-2">
+            <button id="presetSplitBtn" onclick="loadSegmentPreset('split55')" class="px-2.5 py-1 rounded-lg bg-zinc-950 hover:border-zinc-700 border border-zinc-800 text-xs text-zinc-300 transition">5 mi @ 8:30 + 5 mi @ 7:30</button>
+            <button onclick="loadSegmentPreset('warmTempoCool')" class="px-2.5 py-1 rounded-lg bg-zinc-950 hover:border-zinc-700 border border-zinc-800 text-xs text-zinc-300 transition">Warm + Tempo + Cool</button>
+            <button onclick="loadSegmentPreset('progression')" class="px-2.5 py-1 rounded-lg bg-zinc-950 hover:border-zinc-700 border border-zinc-800 text-xs text-zinc-300 transition">Progression Run</button>
+          </div>
+        </div>
+
+        <!-- Dynamic Segment Card List Container -->
+        <div id="segmentsList" class="space-y-3 pt-2">
+          <!-- Segment items inserted via JS -->
+        </div>
+
+        <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 text-xs font-mono">
+          <div class="flex items-center gap-2">
+            <span class="text-zinc-500 uppercase tracking-wider text-[10px]">Segments:</span>
+            <span id="summarySegmentCount" class="font-bold text-white text-sm">0</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-zinc-500 uppercase tracking-wider text-[10px]">Distance:</span>
+            <span id="summaryDistance" class="font-bold text-brand-red text-sm">0.00 mi</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-zinc-500 uppercase tracking-wider text-[10px]">Total Time:</span>
+            <span id="summaryRunTime" class="font-bold text-white text-sm">0h 0m</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-zinc-500 uppercase tracking-wider text-[10px]">Avg Pace:</span>
+            <span id="summaryAvgPace" class="font-bold text-amber-400 text-sm">0:00 /mi</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADVANCED FUELING & NUTRITION SETUP -->
+      <div class="bg-brand-card border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-5">
+        <div class="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+          <div>
+            <h3 class="text-sm font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
+              <i class="fa-solid fa-cookie-bite text-brand-red"></i> Fueling & Nutrition Strategy
+            </h3>
+            <p class="text-xs text-zinc-400 mt-0.5">Customize gel choices, carb targets & intake intervals</p>
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <label class="text-xs font-semibold text-zinc-300">Carry Fuel?</label>
+            <select id="carryFuelToggle" onchange="toggleFuelingInputs(); calculatePlan();" class="bg-zinc-950 border border-zinc-800 text-white text-xs rounded-xl px-3 py-2 font-bold focus:outline-none focus:border-brand-red">
+              <option value="yes" selected>Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="fuelingOptionsContainer" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-zinc-300 mb-1.5">Preferred Endurance Gel</label>
+              <select id="gelPreset" onchange="handleGelSelection(); calculatePlan();" class="w-full h-11 bg-zinc-950 border border-zinc-800 text-white rounded-xl px-3 text-xs focus:outline-none focus:border-brand-red">
+                <option value="maurten100">Maurten Gel 100 (25g Carb, 20mg Na, 0mg Caf)</option>
+                <option value="maurten100caf">Maurten Gel 100 Caf (25g Carb, 22mg Na, 100mg Caf)</option>
+                <option value="maurten160">Maurten Gel 160 (40g Carb, 24mg Na, 0mg Caf)</option>
+                <option value="guEnergy">GU Energy Gel (22g Carb, 60mg Na, 20mg Caf)</option>
+                <option value="guRoctane">GU Roctane (21g Carb, 125mg Na, 35mg Caf)</option>
+                <option value="sisGo">SiS GO Isotonic (22g Carb, 10mg Na, 0mg Caf)</option>
+                <option value="sisBeta" selected>SiS Beta Fuel (40g Carb, 30mg Na, 0mg Caf)</option>
+                <option value="precision30">Precision Fuel PF 30 (30g Carb, 0mg Na, 0mg Caf)</option>
+                <option value="precision90">Precision Fuel PF 90 (90g Carb, 0mg Na, 0mg Caf)</option>
+                <option value="humaGel">Huma Gel (22g Carb, 105mg Na, 0mg Caf)</option>
+                <option value="springAwesome">Spring Energy Awesome Sauce (45g Carb, 120mg Na, 0mg Caf)</option>
+                <option value="untappedMaple">UnTapped Maple (26g Carb, 5mg Na, 0mg Caf)</option>
+                <option value="custom">-- Custom Gel Values --</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-zinc-300 mb-1.5">Target Carbs / Hour</label>
+              <div class="relative flex items-center">
+                <input type="number" id="targetCarbsHr" value="80" min="0" max="120" step="5" oninput="calculatePlan()" class="w-full h-11 bg-zinc-950 border border-zinc-800 text-white rounded-xl pl-3.5 pr-14 text-sm focus:outline-none focus:border-brand-red font-mono">
+                <span class="absolute right-3 text-xs text-zinc-500 font-semibold pointer-events-none">g/hr</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="customGelBox" class="hidden bg-zinc-950 border border-zinc-800 p-3.5 rounded-xl grid grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] font-semibold text-zinc-400 mb-1">Carbs (g)</label>
+              <input type="number" id="customCarbs" value="25" min="1" max="150" oninput="calculatePlan()" class="w-full bg-zinc-900 border border-zinc-800 text-white text-xs rounded-lg p-2 font-mono">
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-zinc-400 mb-1">Sodium (mg)</label>
+              <input type="number" id="customSodium" value="50" min="0" max="500" oninput="calculatePlan()" class="w-full bg-zinc-900 border border-zinc-800 text-white text-xs rounded-lg p-2 font-mono">
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-zinc-400 mb-1">Caffeine (mg)</label>
+              <input type="number" id="customCaffeine" value="0" min="0" max="300" oninput="calculatePlan()" class="w-full bg-zinc-900 border border-zinc-800 text-white text-xs rounded-lg p-2 font-mono">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            <div>
+              <label class="block text-xs font-semibold text-zinc-300 mb-1.5">Target Sodium / Hour</label>
+              <div class="relative flex items-center">
+                <input type="number" id="targetSodiumHr" value="400" min="0" max="1500" step="50" oninput="calculatePlan()" class="w-full h-11 bg-zinc-950 border border-zinc-800 text-white rounded-xl pl-3.5 pr-14 text-sm focus:outline-none focus:border-brand-red font-mono">
+                <span class="absolute right-3 text-xs text-zinc-500 font-semibold pointer-events-none">mg/hr</span>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-zinc-300 mb-1.5">Caffeine Strategy</label>
+              <select id="caffeinePreference" onchange="calculatePlan()" class="w-full h-11 bg-zinc-950 border border-zinc-800 text-white rounded-xl px-3 text-xs focus:outline-none focus:border-brand-red">
+                <option value="none">No Caffeine</option>
+                <option value="low">Low (~25 - 50mg during run)</option>
+                <option value="moderate" selected>Moderate (~75 - 100mg during run)</option>
+                <option value="high">High (150mg+ or caffeine each hour)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WEATHER & FLUID INTAKE ESTIMATOR -->
+      <div class="bg-brand-card border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-4">
+        <div class="border-b border-zinc-800/80 pb-3">
+          <h3 class="text-sm font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
+            <i class="fa-solid fa-cloud-sun-rain text-brand-red"></i> Expected Weather & Fluid Intake
+          </h3>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-zinc-300 mb-1.5">Temperature</label>
+            <select id="weatherTemp" onchange="calculatePlan()" class="w-full h-11 bg-zinc-950 border border-zinc-800 text-white rounded-xl px-3 text-xs focus:outline-none focus:border-brand-red">
+              <option value="cool">Cool (&lt; 50°F / 10°C)</option>
+              <option value="moderate" selected>Moderate (50°F - 70°F / 10°C - 21°C)</option>
+              <option value="warm">Warm (70°F - 85°F / 21°C - 29°C)</option>
+              <option value="hot">Hot (&gt; 85°F / 29°C)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-zinc-300 mb-1.5">Humidity Level</label>
+            <select id="weatherHumidity" onchange="calculatePlan()" class="w-full h-11 bg-zinc-950 border border-zinc-800 text-white rounded-xl px-3 text-xs focus:outline-none focus:border-brand-red">
+              <option value="low">Low (&lt; 40%)</option>
+              <option value="moderate" selected>Moderate (40% - 70%)</option>
+              <option value="high">High (&gt; 70%)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT COLUMN: Output Schedule, Chart, Calendar & Timeline (5 Cols) -->
+    <section class="lg:col-span-5 space-y-6">
+      
+      <!-- HIGHLIGHT OVERVIEW CARD -->
+      <div class="bg-gradient-to-br from-zinc-900 via-brand-card to-zinc-950 border border-red-500/30 rounded-2xl p-6 shadow-2xl relative overflow-hidden red-glow">
+        <div class="absolute -right-8 -top-8 w-32 h-32 bg-red-600/10 rounded-full blur-2xl pointer-events-none"></div>
+
+        <div class="flex items-center justify-between border-b border-zinc-800 pb-4 mb-4">
+          <span class="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-flag-checkered text-brand-red"></i> Generated Run Schedule
+          </span>
+          <span id="badgeRunType" class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-red-500/10 text-brand-red border border-red-500/30 uppercase">
+            Simple Run
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div class="bg-zinc-950/80 p-3.5 rounded-xl border border-zinc-800/80">
+            <p class="text-[11px] font-medium text-zinc-400">Wake Up & Prep</p>
+            <p id="timeWake" class="text-xl font-bold font-mono text-amber-400 mt-1">--:--</p>
+            <p id="wakeSubtext" class="text-[10px] text-zinc-500 mt-0.5">30m prep time</p>
+          </div>
+
+          <div class="bg-zinc-950/80 p-3.5 rounded-xl border border-zinc-800/80">
+            <p class="text-[11px] font-medium text-zinc-400">Start Running</p>
+            <p id="timeStartRun" class="text-xl font-bold font-mono text-brand-red mt-1">--:--</p>
+            <p class="text-[10px] text-zinc-500 mt-0.5">Step out the door</p>
+          </div>
+
+          <div class="bg-zinc-950/80 p-3.5 rounded-xl border border-zinc-800/80">
+            <p class="text-[11px] font-medium text-zinc-400">Total Duration</p>
+            <p id="totalRunDuration" class="text-xl font-bold font-mono text-white mt-1">0h 00m</p>
+            <p id="totalDistanceSub" class="text-[10px] text-zinc-500 mt-0.5">0.0 mi total</p>
+          </div>
+
+          <div class="bg-zinc-950/80 p-3.5 rounded-xl border border-zinc-800/80">
+            <p class="text-[11px] font-medium text-zinc-400">Finish Time</p>
+            <p id="timeTargetFinish" class="text-xl font-bold font-mono text-white mt-1">06:30 AM</p>
+            <p class="text-[10px] text-zinc-500 mt-0.5">Goal completion</p>
+          </div>
+        </div>
+
+        <!-- NUTRITION & HYDRATION SUMMARY HIGHLIGHT BOX -->
+        <div class="bg-zinc-950/90 border border-zinc-800 rounded-xl p-4 space-y-2 text-xs">
+          <div class="flex items-center justify-between text-zinc-400 font-bold uppercase text-[10px] tracking-wider border-b border-zinc-800/80 pb-1.5">
+            <span><i class="fa-solid fa-apple-whole text-amber-400 mr-1"></i> Nutrition & Hydration Plan</span>
+            <span id="fuelStatusBadge" class="text-brand-red font-mono">Fueling Active</span>
+          </div>
+
+          <div id="gelSummaryLine" class="text-zinc-200 flex items-start gap-2">
+            <i class="fa-solid fa-cookie text-amber-400 mt-0.5"></i>
+            <div>
+              <span id="gelSummaryCount" class="font-bold text-white">2x SiS Beta Fuel</span>
+              <p id="gelSummaryDetail" class="text-[11px] text-zinc-400">80g total carbs (~80g/hr target)</p>
+            </div>
+          </div>
+
+          <div id="fluidSummaryLine" class="text-zinc-200 flex items-start gap-2 pt-1 border-t border-zinc-900">
+            <i class="fa-solid fa-bottle-water text-cyan-400 mt-0.5"></i>
+            <div>
+              <span id="fluidSummaryCount" class="font-bold text-white">~23 oz Total Fluid</span>
+              <p id="fluidSummaryDetail" class="text-[11px] text-zinc-400">20 oz/hr based on Moderate temp</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CALENDAR EXPORT ACTIONS -->
+        <div class="mt-4 pt-3 border-t border-zinc-800 flex flex-wrap gap-2 no-print">
+          <button onclick="exportICSFile()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition">
+            <i class="fa-solid fa-calendar-plus text-amber-400"></i> Export .ICS File
+          </button>
+          <button onclick="openGoogleCalendar()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition">
+            <i class="fa-brands fa-google text-blue-400"></i> Google Calendar
+          </button>
+        </div>
+      </div>
+
+      <!-- PACING & EFFORT VISUAL CHART CARD -->
+      <div class="bg-brand-card border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
+            <i class="fa-solid fa-chart-line text-brand-red"></i> Pacing Profile Chart
+          </h3>
+          <span class="text-[10px] text-zinc-500 font-mono">Pace (min/dist) over distance</span>
+        </div>
+        
+        <div class="w-full bg-zinc-950 border border-zinc-800/80 rounded-xl p-3">
+          <svg id="paceChart" viewBox="0 0 500 150" class="w-full h-36 overflow-visible"></svg>
+        </div>
+      </div>
+
+      <!-- ROUTE FINDER & MAPPING TOOLS CARD -->
+      <div class="bg-brand-card border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-4 no-print">
+        <div class="border-b border-zinc-800/80 pb-3 flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
+              <i class="fa-solid fa-map-location-dot text-brand-red"></i> Route Integration
+            </h3>
+            <p class="text-xs text-zinc-400 mt-0.5">Search nearby loops and routes</p>
+          </div>
+        </div>
+
+        <!-- Location Search Input -->
+        <div class="space-y-2 pt-1">
+          <label class="block text-xs font-semibold text-zinc-300">Search Nearby Routes</label>
+          <div class="flex gap-2">
+            <div class="relative flex-1">
+              <i class="fa-solid fa-location-dot absolute left-3.5 top-3.5 text-zinc-500 text-xs"></i>
+              <input type="text" id="routeLocation" placeholder="e.g. Austin, TX or 78701" class="w-full h-10 bg-zinc-950 border border-zinc-800 text-white rounded-xl pl-9 pr-3 text-xs focus:outline-none focus:border-brand-red">
+            </div>
+            <button onclick="searchNearbyRoutes()" class="bg-brand-red hover:bg-red-600 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition flex items-center gap-1.5 shadow-md">
+              <i class="fa-brands fa-strava"></i> Search
+            </button>
+          </div>
+          <p class="text-[11px] text-zinc-500">Searches routes around <span id="mapTargetDistLabel">8.0 mi</span></p>
+        </div>
+
+        <!-- Mapping Quick Links -->
+        <div class="pt-2 border-t border-zinc-800/80 space-y-2">
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="openRouteBuilder('strava')" class="flex items-center justify-center gap-2 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 p-2 rounded-xl text-xs font-semibold transition hover:border-orange-500/50">
+              <i class="fa-brands fa-strava text-orange-500"></i> Strava Builder
+            </button>
+            <button onclick="openRouteBuilder('google')" class="flex items-center justify-center gap-2 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 text-zinc-200 p-2 rounded-xl text-xs font-semibold transition hover:border-blue-500/50">
+              <i class="fa-solid fa-map text-blue-400"></i> Google Maps
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TIMELINE BREAKDOWN CARD -->
+      <div class="bg-brand-card border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
+            <i class="fa-solid fa-timeline text-brand-red"></i> Timeline & Milestones
+          </h3>
+          <span class="text-[11px] text-zinc-500">Chronological Schedule</span>
+        </div>
+
+        <div id="timelineContainer" class="relative pl-6 space-y-5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-zinc-800 custom-scrollbar max-h-[500px] overflow-y-auto pr-2">
+          <!-- Dynamic Timeline Items -->
+        </div>
+      </div>
+
+      <!-- EXPORT ACTION BUTTONS -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 no-print">
+        <button onclick="copyScheduleText()" class="bg-brand-red hover:bg-red-600 text-white font-bold py-3 px-4 rounded-xl text-xs transition border border-red-500/30 flex items-center justify-center gap-2 shadow-lg shadow-red-600/20">
+          <i class="fa-regular fa-copy"></i>
+          Copy Plaintext
+        </button>
+        <button onclick="copyWatchFormat()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold py-3 px-4 rounded-xl text-xs transition border border-zinc-700 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-watch-fitness text-amber-400"></i>
+          Garmin/Watch Text
+        </button>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- MOBILE STICKY ACTION BAR -->
+  <div class="fixed bottom-0 left-0 right-0 bg-zinc-950/95 border-t border-zinc-800 p-3 sm:hidden z-40 flex items-center justify-around no-print backdrop-blur-md">
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="flex flex-col items-center text-zinc-400 hover:text-white text-[10px]">
+      <i class="fa-solid fa-sliders text-base"></i>
+      <span>Inputs</span>
+    </button>
+    <button onclick="openWristbandModal()" class="flex flex-col items-center text-zinc-400 hover:text-white text-[10px]">
+      <i class="fa-solid fa-tape text-base text-amber-400"></i>
+      <span>Pace Band</span>
+    </button>
+    <button onclick="copyScheduleText()" class="flex flex-col items-center text-brand-red font-bold text-[10px]">
+      <i class="fa-regular fa-copy text-base"></i>
+      <span>Copy Plan</span>
+    </button>
+  </div>
+
+  <!-- WRISTBAND MODAL -->
+  <div id="wristbandModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 no-print">
+    <div class="bg-brand-card border border-zinc-800 rounded-2xl max-w-lg w-full p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-tape text-amber-400"></i> Race Day Pace Wristband
+        </h3>
+        <button onclick="closeWristbandModal()" class="text-zinc-400 hover:text-white text-lg">&times;</button>
+      </div>
+      
+      <p class="text-xs text-zinc-400">Print or cut out this split chart to wear on your wrist on race day.</p>
+
+      <div id="wristbandContent" class="bg-white text-black p-4 rounded-xl font-mono text-xs space-y-2 border border-zinc-300 overflow-x-auto">
+        <!-- Generated Wristband Table -->
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="window.print()" class="bg-brand-red hover:bg-red-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition">
+          <i class="fa-solid fa-print"></i> Print Wristband
+        </button>
+        <button onclick="closeWristbandModal()" class="bg-zinc-800 text-zinc-300 hover:text-white px-4 py-2 rounded-xl text-xs font-semibold">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER & CONTACT FORM SECTION -->
+  <footer class="border-t border-zinc-800/80 bg-zinc-950/80 mt-12 py-10 no-print">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      
+      <div class="bg-brand-card border border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+        <div class="text-center max-w-xl mx-auto mb-6">
+          <div class="w-10 h-10 rounded-xl bg-brand-red/10 border border-brand-red/20 text-brand-red flex items-center justify-center mx-auto mb-3">
+            <i class="fa-regular fa-envelope text-lg"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">Questions or Feedback?</h3>
+          <p class="text-xs text-zinc-400 mt-1">Send a message directly to the developer with feedback or feature requests.</p>
+        </div>
+
+        <form id="contactForm" onsubmit="handleContactSubmit(event)" class="space-y-4 max-w-xl mx-auto">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-zinc-300 mb-1.5">Your Name</label>
+              <input type="text" name="name" required placeholder="Runner Name" class="w-full h-10 bg-zinc-950 border border-zinc-800 text-white rounded-xl px-3.5 text-xs focus:outline-none focus:border-brand-red">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-zinc-300 mb-1.5">Your Email</label>
+              <input type="email" name="email" required placeholder="runner@example.com" class="w-full h-10 bg-zinc-950 border border-zinc-800 text-white rounded-xl px-3.5 text-xs focus:outline-none focus:border-brand-red">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-zinc-300 mb-1.5">Message / Question</label>
+            <textarea name="message" rows="4" required placeholder="How can we help make your run planning better?" class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl p-3.5 text-xs focus:outline-none focus:border-brand-red custom-scrollbar"></textarea>
+          </div>
+
+          <button type="submit" id="contactSubmitBtn" class="w-full bg-brand-red hover:bg-red-600 text-white font-bold py-3 px-4 rounded-xl text-xs transition border border-red-500/30 flex items-center justify-center gap-2 shadow-lg shadow-red-600/20">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>Send Message</span>
+          </button>
+          
+          <div id="contactStatus" class="hidden text-center text-xs font-semibold py-2 rounded-xl"></div>
+        </form>
+      </div>
+
+      <div class="text-center text-xs text-zinc-600">
+        <p>&copy; RUNPLAN PRO. Designed for runners & endurance athletes.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- TOAST NOTIFICATION COMPONENT -->
+  <div id="toast" class="fixed bottom-16 sm:bottom-5 right-5 bg-zinc-900 text-red-400 border border-red-500/30 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transform translate-y-20 opacity-0 transition-all duration-300 z-50 pointer-events-none">
+    <i class="fa-solid fa-circle-check text-brand-red text-lg"></i>
+    <span id="toastMessage" class="text-xs font-semibold text-white">Copied to clipboard!</span>
+  </div>
+
+  <!-- JAVASCRIPT ENGINE -->
+  <script>
+    // Gel Database
+    const GEL_DATABASE = {
+      maurten100: { name: 'Maurten Gel 100', carbs: 25, sodium: 20, caffeine: 0 },
+      maurten100caf: { name: 'Maurten Gel 100 Caf 100', carbs: 25, sodium: 22, caffeine: 100 },
+      maurten160: { name: 'Maurten Gel 160', carbs: 40, sodium: 24, caffeine: 0 },
+      guEnergy: { name: 'GU Energy Gel', carbs: 22, sodium: 60, caffeine: 20 },
+      guRoctane: { name: 'GU Roctane Gel', carbs: 21, sodium: 125, caffeine: 35 },
+      sisGo: { name: 'SiS GO Isotonic', carbs: 22, sodium: 10, caffeine: 0 },
+      sisBeta: { name: 'SiS Beta Fuel', carbs: 40, sodium: 30, caffeine: 0 },
+      precision30: { name: 'Precision Fuel PF 30', carbs: 30, sodium: 0, caffeine: 0 },
+      precision90: { name: 'Precision Fuel PF 90', carbs: 90, sodium: 0, caffeine: 0 },
+      humaGel: { name: 'Huma Gel', carbs: 22, sodium: 105, caffeine: 0 },
+      springAwesome: { name: 'Spring Energy Awesome Sauce', carbs: 45, sodium: 120, caffeine: 0 },
+      untappedMaple: { name: 'UnTapped Maple', carbs: 26, sodium: 5, caffeine: 0 }
+    };
+
+    // Global State
+    let state = {
+      unit: 'miles',
+      mode: 'simple',
+      eventType: 'training',
+      timeBasis: 'finish',
+      calculatedTotalDistance: 8.0,
+      segments: [
+        { id: 1, name: 'First Segment', distance: 4.0, min: 8, sec: 30 },
+        { id: 2, name: 'Second Segment', distance: 4.0, min: 7, sec: 30 }
+      ]
+    };
+
+    window.onload = function() {
+      loadSavedState();
+      updateUnitUI();
+      renderSegments();
+      calculatePlan();
+    };
+
+    function saveState() {
+      const dataToSave = {
+        unit: state.unit,
+        mode: state.mode,
+        eventType: state.eventType,
+        timeBasis: state.timeBasis,
+        simpleDistance: document.getElementById('simpleDistance').value,
+        simplePaceMin: document.getElementById('simplePaceMin').value,
+        simplePaceSec: document.getElementById('simplePaceSec').value,
+        targetTime: document.getElementById('targetTime').value,
+        prepMinutes: document.getElementById('prepMinutes').value,
+        gelPreset: document.getElementById('gelPreset').value,
+        targetCarbsHr: document.getElementById('targetCarbsHr').value,
+        segments: state.segments
+      };
+      localStorage.setItem('runplan_pro_state', JSON.stringify(dataToSave));
+    }
+
+    function loadSavedState() {
+      const saved = localStorage.getItem('runplan_pro_state');
+      if (!saved) return;
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.unit) state.unit = parsed.unit;
+        if (parsed.mode) state.mode = parsed.mode;
+        if (parsed.eventType) state.eventType = parsed.eventType;
+        if (parsed.timeBasis) state.timeBasis = parsed.timeBasis;
+        if (parsed.segments) state.segments = parsed.segments;
+
+        if (parsed.simpleDistance) document.getElementById('simpleDistance').value = parsed.simpleDistance;
+        if (parsed.simplePaceMin) document.getElementById('simplePaceMin').value = parsed.simplePaceMin;
+        if (parsed.simplePaceSec) document.getElementById('simplePaceSec').value = parsed.simplePaceSec;
+        if (parsed.targetTime) document.getElementById('targetTime').value = parsed.targetTime;
+        if (parsed.prepMinutes) document.getElementById('prepMinutes').value = parsed.prepMinutes;
+        if (parsed.gelPreset) document.getElementById('gelPreset').value = parsed.gelPreset;
+        if (parsed.targetCarbsHr) document.getElementById('targetCarbsHr').value = parsed.targetCarbsHr;
+
+        setMode(state.mode);
+        setEventType(state.eventType);
+        setTimeBasis(state.timeBasis);
+      } catch (e) {
+        console.error("Failed to restore saved plan state", e);
+      }
+    }
+
+    function setEventType(type) {
+      state.eventType = type;
+      const trainingBtn = document.getElementById('eventTypeTrainingBtn');
+      const raceBtn = document.getElementById('eventTypeRaceBtn');
+      const racePanel = document.getElementById('raceDayPanel');
+
+      if (type === 'race') {
+        raceBtn.className = "px-3 py-1 rounded-lg text-white font-bold bg-brand-red shadow-sm";
+        trainingBtn.className = "px-3 py-1 rounded-lg text-zinc-400 hover:text-white";
+        racePanel.classList.remove('hidden');
+      } else {
+        trainingBtn.className = "px-3 py-1 rounded-lg text-white font-bold bg-zinc-800";
+        raceBtn.className = "px-3 py-1 rounded-lg text-zinc-400 hover:text-white";
+        racePanel.classList.add('hidden');
+      }
+
+      calculatePlan();
+    }
+
+    function setTimeBasis(newBasis) {
+      state.timeBasis = newBasis;
+      const finishBtn = document.getElementById('basisFinishBtn');
+      const startBtn = document.getElementById('basisStartBtn');
+      const label = document.getElementById('timeInputLabel');
+      const subtext = document.getElementById('timeInputSubtext');
+
+      if (newBasis === 'finish') {
+        finishBtn.className = "flex-1 py-1.5 rounded-lg transition-all duration-200 bg-brand-red text-white font-bold shadow-sm";
+        startBtn.className = "flex-1 py-1.5 rounded-lg text-zinc-400 hover:text-white transition-all duration-200";
+        label.textContent = "Target Finish Time";
+        subtext.textContent = "When you need to finish";
+      } else {
+        startBtn.className = "flex-1 py-1.5 rounded-lg transition-all duration-200 bg-brand-red text-white font-bold shadow-sm";
+        finishBtn.className = "flex-1 py-1.5 rounded-lg text-zinc-400 hover:text-white transition-all duration-200";
+        label.textContent = "Target Start Time";
+        subtext.textContent = "When you plan to start running";
+      }
+
+      calculatePlan();
+    }
+
+    function setUnit(newUnit) {
+      if (state.unit === newUnit) return;
+      
+      const conversionFactor = newUnit === 'km' ? 1.60934 : 0.621371;
+      state.unit = newUnit;
+
+      const simpleDistEl = document.getElementById('simpleDistance');
+      simpleDistEl.value = (parseFloat(simpleDistEl.value) * conversionFactor).toFixed(1);
+
+      state.segments.forEach(seg => {
+        seg.distance = parseFloat((seg.distance * conversionFactor).toFixed(2));
+      });
+
+      updateUnitUI();
+      renderSegments();
+      calculatePlan();
+    }
+
+    function updateUnitUI() {
+      const isMiles = state.unit === 'miles';
+      
+      document.getElementById('unitMilesBtn').className = isMiles ? "px-3 py-1.5 rounded-lg transition-all duration-200 bg-brand-red text-white font-bold shadow-sm" : "px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition-all duration-200";
+      document.getElementById('unitKmBtn').className = !isMiles ? "px-3 py-1.5 rounded-lg transition-all duration-200 bg-brand-red text-white font-bold shadow-sm" : "px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition-all duration-200";
+
+      document.getElementById('preset5kBtn').textContent = isMiles ? '5K (3.1 mi)' : '5K';
+      document.getElementById('preset10kBtn').textContent = isMiles ? '10K (6.2 mi)' : '10K';
+      document.getElementById('presetHalfBtn').textContent = isMiles ? 'Half (13.1 mi)' : 'Half (21.1 km)';
+      document.getElementById('presetFullBtn').textContent = isMiles ? 'Full (26.2 mi)' : 'Full (42.2 km)';
+
+      document.getElementById('presetSplitBtn').textContent = isMiles 
+        ? '5 mi @ 8:30 + 5 mi @ 7:30' 
+        : '8 km @ 5:15 + 8 km @ 4:40';
+
+      document.querySelectorAll('.unitLabel').forEach(el => el.textContent = isMiles ? 'mi' : 'km');
+    }
+
+    function setMode(newMode) {
+      state.mode = newMode;
+      const simpleBtn = document.getElementById('modeSimpleBtn');
+      const segmentedBtn = document.getElementById('modeSegmentedBtn');
+      const simplePanel = document.getElementById('simpleRunPanel');
+      const segmentedPanel = document.getElementById('segmentedRunPanel');
+      const badgeRunType = document.getElementById('badgeRunType');
+
+      if (newMode === 'simple') {
+        simpleBtn.className = "flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 bg-brand-red text-white shadow-md";
+        segmentedBtn.className = "flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 text-zinc-400 hover:text-white";
+        simplePanel.classList.remove('hidden');
+        segmentedPanel.classList.add('hidden');
+        badgeRunType.textContent = state.eventType === 'race' ? "Simple Race" : "Simple Run";
+      } else {
+        segmentedBtn.className = "flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 bg-brand-red text-white shadow-md";
+        simpleBtn.className = "flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 text-zinc-400 hover:text-white";
+        segmentedPanel.classList.remove('hidden');
+        simplePanel.classList.add('hidden');
+        badgeRunType.textContent = state.eventType === 'race' ? "Segmented Race" : "Segmented Run";
+      }
+
+      calculatePlan();
+    }
+
+    function toggleFuelingInputs() {
+      const carryFuel = document.getElementById('carryFuelToggle').value === 'yes';
+      const container = document.getElementById('fuelingOptionsContainer');
+      if (carryFuel) {
+        container.classList.remove('opacity-40', 'pointer-events-none');
+      } else {
+        container.classList.add('opacity-40', 'pointer-events-none');
+      }
+    }
+
+    function handleGelSelection() {
+      const selected = document.getElementById('gelPreset').value;
+      const customBox = document.getElementById('customGelBox');
+      if (selected === 'custom') {
+        customBox.classList.remove('hidden');
+      } else {
+        customBox.classList.add('hidden');
+      }
+    }
+
+    function setPrepPreset(mins) {
+      document.getElementById('prepMinutes').value = mins;
+      calculatePlan();
+    }
+
+    function setSimplePreset(presetKey) {
+      const isMiles = state.unit === 'miles';
+      let val = 8.0;
+      if (presetKey === '5k') val = isMiles ? 3.1 : 5.0;
+      else if (presetKey === '10k') val = isMiles ? 6.2 : 10.0;
+      else if (presetKey === 'half') val = isMiles ? 13.1 : 21.1;
+      else if (presetKey === 'full') val = isMiles ? 26.2 : 42.2;
+
+      document.getElementById('simpleDistance').value = val;
+      calculatePlan();
+    }
+
+    function loadSegmentPreset(presetKey) {
+      const isKm = state.unit === 'km';
+      if (presetKey === 'split55') {
+        state.segments = isKm ? [
+          { id: Date.now() + 1, name: 'First Segment', distance: 8.0, min: 5, sec: 15 },
+          { id: Date.now() + 2, name: 'Second Segment', distance: 8.0, min: 4, sec: 40 }
+        ] : [
+          { id: Date.now() + 1, name: 'First Segment', distance: 5.0, min: 8, sec: 30 },
+          { id: Date.now() + 2, name: 'Second Segment', distance: 5.0, min: 7, sec: 30 }
+        ];
+      } else if (presetKey === 'warmTempoCool') {
+        state.segments = isKm ? [
+          { id: Date.now() + 1, name: 'Warm-up Jog', distance: 2.0, min: 5, sec: 45 },
+          { id: Date.now() + 2, name: 'Tempo Segment', distance: 6.0, min: 4, sec: 30 },
+          { id: Date.now() + 3, name: 'Cooldown', distance: 2.0, min: 6, sec: 0 }
+        ] : [
+          { id: Date.now() + 1, name: 'Warm-up Jog', distance: 1.5, min: 9, sec: 15 },
+          { id: Date.now() + 2, name: 'Tempo Segment', distance: 4.0, min: 7, sec: 10 },
+          { id: Date.now() + 3, name: 'Cooldown', distance: 1.5, min: 9, sec: 30 }
+        ];
+      } else if (presetKey === 'progression') {
+        state.segments = isKm ? [
+          { id: Date.now() + 1, name: 'Easy Pace (3km)', distance: 3.0, min: 5, sec: 30 },
+          { id: Date.now() + 2, name: 'Moderate Pace (3km)', distance: 3.0, min: 5, sec: 0 },
+          { id: Date.now() + 3, name: 'Fast Finish (4km)', distance: 4.0, min: 4, sec: 30 }
+        ] : [
+          { id: Date.now() + 1, name: 'Easy Pace (2mi)', distance: 2.0, min: 8, sec: 45 },
+          { id: Date.now() + 2, name: 'Moderate Pace (2mi)', distance: 2.0, min: 8, sec: 10 },
+          { id: Date.now() + 3, name: 'Fast Finish (2.2mi)', distance: 2.2, min: 7, sec: 30 }
+        ];
+      }
+      renderSegments();
+      calculatePlan();
+    }
+
+    function addSegment() {
+      const lastSeg = state.segments[state.segments.length - 1];
+      const defaultDist = lastSeg ? lastSeg.distance : (state.unit === 'km' ? 5.0 : 3.0);
+      const defaultMin = lastSeg ? lastSeg.min : (state.unit === 'km' ? 5 : 8);
+      const defaultSec = lastSeg ? lastSeg.sec : 30;
+
+      state.segments.push({
+        id: Date.now(),
+        name: `Segment ${state.segments.length + 1}`,
+        distance: defaultDist,
+        min: defaultMin,
+        sec: defaultSec
+      });
+
+      renderSegments();
+      calculatePlan();
+    }
+
+    function removeSegment(id) {
+      if (state.segments.length <= 1) {
+        showToast("At least 1 segment is required.");
+        return;
+      }
+      state.segments = state.segments.filter(s => s.id !== id);
+      renderSegments();
+      calculatePlan();
+    }
+
+    function moveSegment(index, direction) {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= state.segments.length) return;
+      const temp = state.segments[index];
+      state.segments[index] = state.segments[newIndex];
+      state.segments[newIndex] = temp;
+      renderSegments();
+      calculatePlan();
+    }
+
+    function updateSegmentField(id, field, value) {
+      const seg = state.segments.find(s => s.id === id);
+      if (!seg) return;
+
+      if (field === 'name') seg.name = value;
+      else if (field === 'distance') seg.distance = Math.max(0.01, parseFloat(value) || 0);
+      else if (field === 'min') seg.min = Math.max(0, parseInt(value) || 0);
+      else if (field === 'sec') {
+        let secVal = parseInt(value) || 0;
+        seg.sec = Math.min(59, Math.max(0, secVal));
+      }
+      calculatePlan();
+    }
+
+    function renderSegments() {
+      const container = document.getElementById('segmentsList');
+      const unit = state.unit === 'miles' ? 'mi' : 'km';
+      container.innerHTML = '';
+
+      state.segments.forEach((seg, index) => {
+        const div = document.createElement('div');
+        div.className = "bg-zinc-950 border border-zinc-800 rounded-xl p-4 transition duration-200 hover:border-zinc-700 space-y-3";
+        div.innerHTML = `
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2 flex-1">
+              <span class="w-6 h-6 rounded-lg bg-zinc-900 text-brand-red text-xs font-bold flex items-center justify-center border border-zinc-800">
+                ${index + 1}
+              </span>
+              <input type="text" value="${seg.name}" onchange="updateSegmentField(${seg.id}, 'name', this.value)" 
+                class="bg-transparent text-sm font-semibold text-white focus:outline-none focus:border-b focus:border-brand-red border-b border-transparent px-1 py-0.5 w-full" placeholder="Segment Name">
+            </div>
+
+            <div class="flex items-center gap-1">
+              <button onclick="moveSegment(${index}, -1)" ${index === 0 ? 'disabled class="opacity-30 cursor-not-allowed text-zinc-600 p-1.5"' : 'class="p-1.5 text-zinc-400 hover:text-white transition"'} title="Move Up">
+                <i class="fa-solid fa-arrow-up text-xs"></i>
+              </button>
+              <button onclick="moveSegment(${index}, 1)" ${index === state.segments.length - 1 ? 'disabled class="opacity-30 cursor-not-allowed text-zinc-600 p-1.5"' : 'class="p-1.5 text-zinc-400 hover:text-white transition"'} title="Move Down">
+                <i class="fa-solid fa-arrow-down text-xs"></i>
+              </button>
+              <button onclick="removeSegment(${seg.id})" class="p-1.5 text-rose-400 hover:text-rose-300 transition ml-1" title="Delete Segment">
+                <i class="fa-regular fa-trash-can text-xs"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3 pt-1">
+            <div>
+              <label class="block text-[11px] font-semibold text-zinc-400 mb-1">Distance (${unit})</label>
+              <input type="number" step="0.1" min="0.1" value="${seg.distance}" oninput="updateSegmentField(${seg.id}, 'distance', this.value)"
+                class="w-full bg-zinc-900 border border-zinc-800 text-white rounded-lg px-2.5 py-1.5 text-xs font-mono focus:outline-none focus:border-brand-red">
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-zinc-400 mb-1">Pace Min</label>
+              <input type="number" min="3" max="30" value="${seg.min}" oninput="updateSegmentField(${seg.id}, 'min', this.value)"
+                class="w-full bg-zinc-900 border border-zinc-800 text-white rounded-lg px-2.5 py-1.5 text-xs font-mono focus:outline-none focus:border-brand-red">
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-zinc-400 mb-1">Pace Sec</label>
+              <input type="number" min="0" max="59" step="5" value="${seg.sec}" oninput="updateSegmentField(${seg.id}, 'sec', this.value)"
+                class="w-full bg-zinc-900 border border-zinc-800 text-white rounded-lg px-2.5 py-1.5 text-xs font-mono focus:outline-none focus:border-brand-red">
+            </div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function searchNearbyRoutes() {
+      const location = document.getElementById('routeLocation').value.trim();
+      const dist = state.calculatedTotalDistance || 8;
+      const query = encodeURIComponent(location ? `${location} ${dist} ${state.unit} run route` : `${dist} ${state.unit} running route near me`);
+      window.open(`https://www.google.com/search?q=${query}`, '_blank');
+    }
+
+    function openRouteBuilder(type) {
+      if (type === 'strava') {
+        window.open('https://www.strava.com/routes/new', '_blank');
+      } else {
+        window.open('https://www.google.com/maps', '_blank');
+      }
+    }
+
+    // MAIN CALCULATOR & TIMELINE ENGINE
+    function calculatePlan() {
+      saveState();
+
+      const unit = state.unit === 'miles' ? 'mi' : 'km';
+      let compiledSegments = [];
+
+      if (state.mode === 'simple') {
+        const dist = parseFloat(document.getElementById('simpleDistance').value) || 0;
+        let min = parseInt(document.getElementById('simplePaceMin').value) || 0;
+        let sec = parseInt(document.getElementById('simplePaceSec').value) || 0;
+
+        let basePaceSec = (min * 60) + sec;
+
+        compiledSegments = [{
+          id: 999,
+          name: 'Main Run',
+          distance: dist,
+          min: Math.floor(basePaceSec / 60),
+          sec: Math.round(basePaceSec % 60)
+        }];
+      } else {
+        compiledSegments = state.segments;
+      }
+
+      let totalDistance = 0;
+      let totalRunSeconds = 0;
+
+      const processedSegments = compiledSegments.map(seg => {
+        const paceInSeconds = (seg.min * 60) + seg.sec;
+        const segDurationSeconds = Math.round(seg.distance * paceInSeconds);
+        totalDistance += seg.distance;
+        totalRunSeconds += segDurationSeconds;
+
+        return {
+          ...seg,
+          paceInSeconds,
+          segDurationSeconds
+        };
+      });
+
+      state.calculatedTotalDistance = totalDistance;
+      const mapLabel = document.getElementById('mapTargetDistLabel');
+      if (mapLabel) mapLabel.textContent = `${totalDistance.toFixed(1)} ${unit}`;
+
+      const totalHours = totalRunSeconds / 3600;
+
+      // Update segment summary UI
+      const summaryAvgPaceSec = totalDistance > 0 ? Math.round(totalRunSeconds / totalDistance) : 0;
+      const avgPaceMin = Math.floor(summaryAvgPaceSec / 60);
+      const avgPaceSec = summaryAvgPaceSec % 60;
+      
+      document.getElementById('summarySegmentCount').textContent = compiledSegments.length;
+      document.getElementById('summaryDistance').textContent = `${totalDistance.toFixed(2)} ${unit}`;
+      document.getElementById('summaryRunTime').textContent = formatSecondsToHM(totalRunSeconds);
+      document.getElementById('summaryAvgPace').textContent = `${avgPaceMin}:${avgPaceSec < 10 ? '0' : ''}${avgPaceSec} /${unit}`;
+
+      // Goal Timing Calculations
+      const inputTimeString = document.getElementById('targetTime').value || "06:30";
+      const prepMins = parseInt(document.getElementById('prepMinutes').value) || 0;
+
+      const now = new Date();
+      const [tHours, tMins] = inputTimeString.split(':').map(Number);
+      
+      let startDate, finishDate, wakeDate;
+
+      if (state.timeBasis === 'start') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), tHours, tMins, 0);
+        finishDate = new Date(startDate.getTime() + (totalRunSeconds * 1000));
+        wakeDate = new Date(startDate.getTime() - (prepMins * 60 * 1000));
+      } else {
+        finishDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), tHours, tMins, 0);
+        startDate = new Date(finishDate.getTime() - (totalRunSeconds * 1000));
+        wakeDate = new Date(startDate.getTime() - (prepMins * 60 * 1000));
+      }
+
+      document.getElementById('timeWake').textContent = formatTime12H(wakeDate);
+      document.getElementById('wakeSubtext').textContent = `${prepMins}m prep time`;
+      document.getElementById('timeStartRun').textContent = formatTime12H(startDate);
+      document.getElementById('totalRunDuration').textContent = formatSecondsToHM(totalRunSeconds);
+      document.getElementById('totalDistanceSub').textContent = `${totalDistance.toFixed(1)} ${unit} total`;
+      document.getElementById('timeTargetFinish').textContent = formatTime12H(finishDate);
+
+      // ADVANCED FUEL CALCULATIONS
+      const carryFuel = document.getElementById('carryFuelToggle').value === 'yes';
+      const selectedGelKey = document.getElementById('gelPreset').value;
+      const targetCarbsHr = parseFloat(document.getElementById('targetCarbsHr').value) || 80;
+      
+      let chosenGel = { name: 'Custom Gel', carbs: 40, sodium: 30, caffeine: 0 };
+      if (selectedGelKey === 'custom') {
+        chosenGel.carbs = parseFloat(document.getElementById('customCarbs').value) || 40;
+        chosenGel.sodium = parseFloat(document.getElementById('customSodium').value) || 30;
+        chosenGel.caffeine = parseFloat(document.getElementById('customCaffeine').value) || 0;
+      } else if (GEL_DATABASE[selectedGelKey]) {
+        chosenGel = GEL_DATABASE[selectedGelKey];
+      }
+
+      let gelIntervalMins = chosenGel.carbs > 0 && targetCarbsHr > 0 
+        ? Math.round((chosenGel.carbs / targetCarbsHr) * 60) 
+        : 30;
+
+      const totalCarbsNeeded = totalHours * targetCarbsHr;
+      let totalGelsCount = Math.floor(totalRunSeconds / (gelIntervalMins * 60));
+      
+      if (totalRunSeconds < 2700 || !carryFuel) {
+        totalGelsCount = 0;
+      }
+
+      // WEATHER & HYDRATION CALCULATIONS
+      const tempKey = document.getElementById('weatherTemp').value;
+      const humidityKey = document.getElementById('weatherHumidity').value;
+
+      let baseFluidOzHr = 20;
+      if (tempKey === 'cool') baseFluidOzHr = 14;
+      else if (tempKey === 'moderate') baseFluidOzHr = 20;
+      else if (tempKey === 'warm') baseFluidOzHr = 28;
+      else if (tempKey === 'hot') baseFluidOzHr = 36;
+
+      if (humidityKey === 'high') {
+        baseFluidOzHr = Math.round(baseFluidOzHr * 1.15);
+      }
+
+      const totalFluidOz = Math.round(totalHours * baseFluidOzHr);
+
+      // Update Nutrition Summary
+      const fuelStatusBadge = document.getElementById('fuelStatusBadge');
+
+      if (!carryFuel) {
+        fuelStatusBadge.textContent = "No Fuel Carried";
+        fuelStatusBadge.className = "text-zinc-500 font-mono";
+        document.getElementById('gelSummaryCount').textContent = "None (Carrying No Fuel)";
+        document.getElementById('gelSummaryDetail').textContent = "Carbohydrate reminders disabled";
+      } else if (totalGelsCount === 0) {
+        fuelStatusBadge.textContent = "Short Run";
+        fuelStatusBadge.className = "text-amber-400 font-mono";
+        document.getElementById('gelSummaryCount').textContent = "0 Gels Needed";
+        document.getElementById('gelSummaryDetail').textContent = `Run under 45 mins (${totalCarbsNeeded.toFixed(0)}g carb target optional)`;
+      } else {
+        fuelStatusBadge.textContent = "Fueling Active";
+        fuelStatusBadge.className = "text-brand-red font-mono";
+        const actualCarbsProvided = totalGelsCount * chosenGel.carbs;
+        const actualRate = totalHours > 0 ? Math.round(actualCarbsProvided / totalHours) : 0;
+        document.getElementById('gelSummaryCount').textContent = `${totalGelsCount}x ${chosenGel.name}`;
+        document.getElementById('gelSummaryDetail').textContent = `${actualCarbsProvided}g carbs total (~${actualRate}g/hr achieved, 1 gel every ${gelIntervalMins}m)`;
+      }
+
+      document.getElementById('fluidSummaryCount').textContent = `~${totalFluidOz} oz Total Fluid`;
+      document.getElementById('fluidSummaryDetail').textContent = `~${baseFluidOzHr} oz/hr based on ${capitalize(tempKey)} temp & ${capitalize(humidityKey)} humidity`;
+
+      // BUILD UNIFIED TIMELINE
+      const timelineEvents = [];
+
+      // Prep Event
+      timelineEvents.push({
+        time: wakeDate,
+        title: 'Wake Up & Pre-Run Prep',
+        detail: `Start prep, breakfast, hydrate & pack fuel/gear (${prepMins}m window)`,
+        icon: 'fa-solid fa-bell',
+        color: 'border-amber-500/30 text-amber-400 bg-amber-500/10'
+      });
+
+      // Race Day Logistical Milestones
+      if (state.eventType === 'race') {
+        const corralMins = parseInt(document.getElementById('corralBuffer').value) || 20;
+        const bagDropMins = parseInt(document.getElementById('bagDropBuffer').value) || 15;
+
+        const corralTime = new Date(startDate.getTime() - (corralMins * 60 * 1000));
+        const bagDropTime = new Date(corralTime.getTime() - (bagDropMins * 60 * 1000));
+
+        timelineEvents.push({
+          time: bagDropTime,
+          title: 'Bag Drop & Bathroom Break',
+          detail: 'Final gear check and drop off race bag',
+          icon: 'fa-solid fa-suitcase',
+          color: 'border-purple-500/30 text-purple-400 bg-purple-500/10'
+        });
+
+        timelineEvents.push({
+          time: corralTime,
+          title: 'Corral Lineup Cutoff',
+          detail: 'Step into starting corral and align pacing group',
+          icon: 'fa-solid fa-users-line',
+          color: 'border-amber-500/30 text-amber-400 bg-amber-500/10'
+        });
+      }
+
+      // Start Run
+      timelineEvents.push({
+        time: startDate,
+        title: state.eventType === 'race' ? 'Official Gun Start' : 'Start Running',
+        detail: `Begin run for ${totalDistance.toFixed(1)} ${unit}` + (carryFuel && totalGelsCount > 0 ? ` (carrying ${totalGelsCount}x ${chosenGel.name})` : ''),
+        icon: 'fa-solid fa-play',
+        color: 'border-red-500/30 text-brand-red bg-red-500/10'
+      });
+
+      // Segments
+      let currentSegStartTime = new Date(startDate.getTime());
+      processedSegments.forEach((seg, idx) => {
+        const segEndTime = new Date(currentSegStartTime.getTime() + (seg.segDurationSeconds * 1000));
+        const paceFormatted = `${seg.min}:${seg.sec < 10 ? '0' : ''}${seg.sec}`;
+        const segDurationFormatted = formatSecondsToHM(seg.segDurationSeconds);
+
+        timelineEvents.push({
+          time: currentSegStartTime,
+          title: `${seg.name || 'Segment ' + (idx + 1)}`,
+          detail: `Distance: ${seg.distance} ${unit} | Pace: ${paceFormatted} /${unit} | Duration: ${segDurationFormatted}`,
+          icon: 'fa-solid fa-person-running',
+          color: 'border-zinc-700 text-zinc-300 bg-zinc-900'
+        });
+
+        currentSegStartTime = segEndTime;
+      });
+
+      // Gels
+      if (carryFuel && totalGelsCount > 0) {
+        for (let i = 1; i <= totalGelsCount; i++) {
+          const gelSec = i * gelIntervalMins * 60;
+          if (gelSec < totalRunSeconds) {
+            const gelDate = new Date(startDate.getTime() + (gelSec * 1000));
+            const gelMinsMark = i * gelIntervalMins;
+            timelineEvents.push({
+              time: gelDate,
+              title: `Fuel Reminder: Take Gel #${i}`,
+              detail: `Take 1x ${chosenGel.name} (${chosenGel.carbs}g carb, ${chosenGel.sodium}mg sodium) @ minute ${gelMinsMark}`,
+              icon: 'fa-solid fa-cookie-bite',
+              color: 'border-amber-500/30 text-amber-400 bg-amber-500/10'
+            });
+          }
+        }
+      }
+
+      // Hydration
+      const hydIntervalSec = 20 * 60;
+      const totalHydBreaks = Math.floor(totalRunSeconds / hydIntervalSec);
+      if (totalHours >= 0.75) {
+        for (let j = 1; j <= totalHydBreaks; j++) {
+          const sipSec = j * hydIntervalSec;
+          if (sipSec < totalRunSeconds) {
+            const sipDate = new Date(startDate.getTime() + (sipSec * 1000));
+            const sipMinsMark = j * 20;
+            const sipOz = Math.round(baseFluidOzHr / 3);
+            timelineEvents.push({
+              time: sipDate,
+              title: `Hydration Break (${sipMinsMark}m mark)`,
+              detail: `Sip ~${sipOz} oz fluid/electrolytes (${baseFluidOzHr} oz/hr target)`,
+              icon: 'fa-solid fa-bottle-water',
+              color: 'border-cyan-500/30 text-cyan-400 bg-cyan-500/10'
+            });
+          }
+        }
+      }
+
+      // Finish Line
+      timelineEvents.push({
+        time: finishDate,
+        title: 'Finish Line',
+        detail: `Completed ${totalDistance.toFixed(2)} ${unit} in ${formatSecondsToHM(totalRunSeconds)}`,
+        icon: 'fa-solid fa-flag-checkered',
+        color: 'border-red-500/30 text-brand-red bg-red-500/10'
+      });
+
+      timelineEvents.sort((a, b) => a.time.getTime() - b.time.getTime());
+
+      const timelineContainer = document.getElementById('timelineContainer');
+      timelineContainer.innerHTML = '';
+      timelineEvents.forEach(evt => {
+        addTimelineItem(
+          timelineContainer,
+          formatTime12H(evt.time),
+          evt.title,
+          evt.detail,
+          evt.icon,
+          evt.color
+        );
+      });
+
+      renderPaceChart(processedSegments);
+      renderWristband(processedSegments, startDate);
+    }
+
+    // RENDER SVG PACING CHART
+    function renderPaceChart(segments) {
+      const svg = document.getElementById('paceChart');
+      svg.innerHTML = '';
+
+      if (!segments || segments.length === 0) return;
+
+      const width = 500;
+      const height = 150;
+      const margin = 20;
+
+      let totalDist = 0;
+      segments.forEach(s => totalDist += s.distance);
+      if (totalDist === 0) return;
+
+      const minPaceSec = Math.min(...segments.map(s => s.paceInSeconds));
+      const maxPaceSec = Math.max(...segments.map(s => s.paceInSeconds));
+      const paceRange = (maxPaceSec - minPaceSec) || 60;
+
+      let currentX = margin;
+      let pathD = '';
+
+      segments.forEach((seg, idx) => {
+        const segWidth = (seg.distance / totalDist) * (width - margin * 2);
+        const normPace = 1 - ((seg.paceInSeconds - minPaceSec) / paceRange);
+        const y = height - margin - (normPace * (height - margin * 2));
+
+        if (idx === 0) pathD += `M ${currentX} ${y} `;
+        pathD += `L ${currentX + segWidth} ${y} `;
+
+        // Bar / Area Visual
+        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("x", currentX);
+        rect.setAttribute("y", y);
+        rect.setAttribute("width", Math.max(1, segWidth - 2));
+        rect.setAttribute("height", height - margin - y);
+        rect.setAttribute("fill", "#ff3b30");
+        rect.setAttribute("opacity", "0.2");
+        rect.setAttribute("rx", "4");
+        svg.appendChild(rect);
+
+        // Segment Label
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", currentX + segWidth / 2);
+        text.setAttribute("y", height - 5);
+        text.setAttribute("fill", "#a1a1aa");
+        text.setAttribute("font-size", "10");
+        text.setAttribute("text-anchor", "middle");
+        text.textContent = `${seg.min}:${seg.sec < 10 ? '0' : ''}${seg.sec}`;
+        svg.appendChild(text);
+
+        currentX += segWidth;
+      });
+
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", pathD);
+      path.setAttribute("stroke", "#ff3b30");
+      path.setAttribute("stroke-width", "3");
+      path.setAttribute("fill", "none");
+      svg.appendChild(path);
+    }
+
+    // PACE WRISTBAND GENERATOR
+    function renderWristband(segments, startDate) {
+      const container = document.getElementById('wristbandContent');
+      const unit = state.unit === 'miles' ? 'mi' : 'km';
+      
+      let html = `<div class="font-bold border-b border-black pb-1 mb-2 flex justify-between">
+        <span>RUNPLAN PACING STRIP</span>
+        <span>TARGET: ${document.getElementById('timeTargetFinish').textContent}</span>
+      </div>`;
+
+      html += `<table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-zinc-400 text-[10px]">
+            <th class="py-1">DIST</th>
+            <th class="py-1">SPLIT PACE</th>
+            <th class="py-1">ELAPSED TIME</th>
+            <th class="py-1">CLOCK TIME</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      let cumulativeDist = 0;
+      let cumulativeSecs = 0;
+
+      segments.forEach(seg => {
+        const paceStr = `${seg.min}:${seg.sec < 10 ? '0' : ''}${seg.sec}/${unit}`;
+        const steps = Math.max(1, Math.ceil(seg.distance));
+        for (let i = 1; i <= steps; i++) {
+          const stepDist = Math.min(1, seg.distance - (i - 1));
+          cumulativeDist += stepDist;
+          cumulativeSecs += Math.round(stepDist * seg.paceInSeconds);
+
+          const clockDate = new Date(startDate.getTime() + (cumulativeSecs * 1000));
+          
+          html += `<tr class="border-b border-zinc-200">
+            <td class="py-0.5 font-bold">${cumulativeDist.toFixed(1)} ${unit}</td>
+            <td class="py-0.5">${paceStr}</td>
+            <td class="py-0.5">${formatSecondsToHM(cumulativeSecs)}</td>
+            <td class="py-0.5">${formatTime12H(clockDate)}</td>
+          </tr>`;
+        }
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    function openWristbandModal() {
+      document.getElementById('wristbandModal').classList.remove('hidden');
+    }
+
+    function closeWristbandModal() {
+      document.getElementById('wristbandModal').classList.add('hidden');
+    }
+
+    // CALENDAR EXPORT FUNCTIONS (.ics & Google Calendar)
+    function exportICSFile() {
+      const wakeTime = document.getElementById('timeWake').textContent;
+      const startTime = document.getElementById('timeStartRun').textContent;
+      const totalDist = document.getElementById('summaryDistance').textContent;
+      const totalDur = document.getElementById('totalRunDuration').textContent;
+
+      const now = new Date();
+      const dateStr = now.toISOString().replace(/-|:|\.\d\d\d/g, "").substring(0, 8);
+
+      const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RUNPLAN PRO//Run Schedule//EN
+BEGIN:VEVENT
+SUMMARY:🏃 Run Event - ${totalDist} (${totalDur})
+DESCRIPTION:Wake up at ${wakeTime}. Start run at ${startTime}. Total distance: ${totalDist}.
+DTSTART:${dateStr}T060000Z
+DTEND:${dateStr}T080000Z
+END:VEVENT
+END:VCALENDAR`;
+
+      const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.setAttribute('download', 'runplan_schedule.ics');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast("Downloaded .ICS Calendar File!");
+    }
+
+    function openGoogleCalendar() {
+      const totalDist = document.getElementById('summaryDistance').textContent;
+      const totalDur = document.getElementById('totalRunDuration').textContent;
+      const startTime = document.getElementById('timeStartRun').textContent;
+
+      const title = encodeURIComponent(`🏃 Run Workout - ${totalDist}`);
+      const details = encodeURIComponent(`Start Time: ${startTime}\nTotal Target Duration: ${totalDur}\nPlanned using RUNPLAN PRO.`);
+      
+      const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}`;
+      window.open(gcalUrl, '_blank');
+    }
+
+    function copyWatchFormat() {
+      const unit = state.unit === 'miles' ? 'mi' : 'km';
+      let text = `WORKOUT STRUCTURE:\n`;
+      if (state.mode === 'simple') {
+        const dist = document.getElementById('simpleDistance').value;
+        const min = document.getElementById('simplePaceMin').value;
+        const sec = document.getElementById('simplePaceSec').value;
+        text += `- Run ${dist} ${unit} @ ${min}:${sec < 10 ? '0' : ''}${sec} /${unit}\n`;
+      } else {
+        state.segments.forEach((seg, i) => {
+          text += `- Step ${i+1}: ${seg.distance} ${unit} @ ${seg.min}:${seg.sec < 10 ? '0' : ''}${seg.sec}\n`;
+        });
+      }
+      
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      showToast("Watch Text format copied!");
+    }
+
+    function addTimelineItem(container, timeStr, titleStr, detailStr, iconClass, colorClasses) {
+      const item = document.createElement('div');
+      item.className = "relative flex items-start gap-4 group";
+      item.innerHTML = `
+        <div class="absolute -left-[31px] top-1 w-6 h-6 rounded-full border ${colorClasses} flex items-center justify-center text-[10px] shadow-md z-10">
+          <i class="${iconClass}"></i>
+        </div>
+        <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-3.5 flex-1 transition hover:border-zinc-700">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+            <span class="text-xs font-bold text-white">${titleStr}</span>
+            <span class="text-[11px] font-mono font-bold text-zinc-400">${timeStr}</span>
+          </div>
+          <p class="text-xs text-zinc-400">${detailStr}</p>
+        </div>
+      `;
+      container.appendChild(item);
+    }
+
+    function formatSecondsToHM(totalSecs) {
+      const hours = Math.floor(totalSecs / 3600);
+      const mins = Math.floor((totalSecs % 3600) / 60);
+      if (hours > 0) return `${hours}h ${mins}m`;
+      return `${mins}m`;
+    }
+
+    function formatTime12H(dateObj) {
+      let hours = dateObj.getHours();
+      let mins = dateObj.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      mins = mins < 10 ? '0' + mins : mins;
+      return `${hours}:${mins} ${ampm}`;
+    }
+
+    function capitalize(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMessage');
+      toastMsg.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    function copyScheduleText() {
+      const unit = state.unit === 'miles' ? 'mi' : 'km';
+      const wakeTime = document.getElementById('timeWake').textContent;
+      const startTime = document.getElementById('timeStartRun').textContent;
+      const finishTime = document.getElementById('timeTargetFinish').textContent;
+      const totalDur = document.getElementById('totalRunDuration').textContent;
+      const totalDist = document.getElementById('summaryDistance').textContent;
+      const avgPace = document.getElementById('summaryAvgPace').textContent;
+
+      const gelSummary = document.getElementById('gelSummaryCount').textContent;
+      const gelDetail = document.getElementById('gelSummaryDetail').textContent;
+      const fluidSummary = document.getElementById('fluidSummaryCount').textContent;
+      const fluidDetail = document.getElementById('fluidSummaryDetail').textContent;
+
+      let text = `🏃 RUNPLAN WORKOUT & NUTRITION SCHEDULE\n`;
+      text += `====================================\n`;
+      text += `⏰ Wake / Prep    : ${wakeTime}\n`;
+      text += `🚀 Start Running  : ${startTime}\n`;
+      text += `🏁 Target Finish  : ${finishTime}\n`;
+      text += `📏 Total Distance : ${totalDist}\n`;
+      text += `⏱️ Total Duration : ${totalDur}\n`;
+      text += `⚡ Average Pace   : ${avgPace}\n`;
+      text += `====================================\n`;
+      text += `🧪 NUTRITION PLAN : ${gelSummary}\n`;
+      text += `   Details        : ${gelDetail}\n`;
+      text += `💧 HYDRATION PLAN : ${fluidSummary}\n`;
+      text += `   Details        : ${fluidDetail}\n`;
+      text += `====================================\n\n`;
+      text += `SEGMENTS BREAKDOWN:\n`;
+
+      if (state.mode === 'simple') {
+        const dist = document.getElementById('simpleDistance').value;
+        const min = document.getElementById('simplePaceMin').value;
+        const sec = document.getElementById('simplePaceSec').value;
+        text += `• Main Run: ${dist} ${unit} @ ${min}:${sec < 10 ? '0' : ''}${sec} /${unit}\n`;
+      } else {
+        state.segments.forEach((seg, i) => {
+          const pace = `${seg.min}:${seg.sec < 10 ? '0' : ''}${seg.sec}`;
+          text += `${i + 1}. ${seg.name}: ${seg.distance} ${unit} @ ${pace} /${unit}\n`;
+        });
+      }
+
+      text += `\nGenerated with RunPlan Pro.`;
+
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      showToast("Plan copied to clipboard!");
+    }
+
+    function handleContactSubmit(e) {
+      e.preventDefault();
+      const status = document.getElementById('contactStatus');
+      status.textContent = "Thank you! Your message has been sent.";
+      status.className = "text-center text-xs font-semibold py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+      status.classList.remove('hidden');
+      e.target.reset();
+    }
+  </script>
+</body>
+</html>
